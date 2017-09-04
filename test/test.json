@@ -1,0 +1,82 @@
+{
+    "type": "element",
+    "children": [{
+        "type": "element",
+        "children": [{
+            "children": [],
+            "type": "text",
+            "value": "12331"
+        }, {
+            "type": "object",
+            "value": "",
+            "expInfo": {
+                "condition": "(true)"
+            },
+            "children": [{
+                "type": "object",
+                "value": "",
+                "expInfo": {
+                    "condition": " false"
+                },
+                "children": [{
+                    "children": [],
+                    "type": "text",
+                    "value": "2"
+                }, {
+                    "children": [],
+                    "type": "expression",
+                    "value": "cubi"
+                }]
+            }, {
+                "children": [],
+                "type": "text",
+                "value": "1"
+            }]
+        }, {
+            "children": [],
+            "type": "text",
+            "value": "4"
+        }, {
+            "type": "object",
+            "value": "",
+            "expInfo": {
+                "key": "i",
+                "value": "v",
+                "obj": "abc"
+            },
+            "children": [{
+                "type": "object",
+                "value": "",
+                "expInfo": {
+                    "key": "$index2",
+                    "value": "item",
+                    "obj": "abc.ccc"
+                },
+                "children": [{
+                    "children": [],
+                    "type": "text",
+                    "value": "fuck cubige"
+                }]
+            }]
+        }, {
+            "type": "object",
+            "value": "",
+            "expInfo": {
+                "key": "$index1",
+                "value": "v",
+                "obj": "abc"
+            },
+            "children": []
+        }, {
+            "children": [],
+            "type": "text",
+            "value": "444"
+        }],
+        "attributes": {
+            "href": ""
+        }
+    }],
+    "attributes": {
+        "c-tpl": "cubi"
+    }
+}

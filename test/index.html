@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src='../dist/bundle.js'></script>
+</head>
+<body>
+    <div c-tpl='cubi'>
+        <ul>
+         ~ each i,v in abc ~
+                ~ each item in v ~
+                ~ if Math.random() > 0.5
+                <li>~ item ~ 0.5+</li>
+                ~ else if Math.random() > 0.5 ~
+                <li>else if item</LI>
+                ~ else ~
+                <li>0.5-</li>
+                ~ end ~
+                ~ end ~
+            ~ end ~
+        </ul>
+    </div>
+</body>
+</html>
+
+<script>
+    Cube.set("cubi",{
+        abc : [{
+            ccc : 1,
+        },{
+            ccc : 2
+        }]
+    });
+
+    var points = [
+        [0,0],
+        [30,0],
+        [30,30],
+        [0,30],
+        [-30,30],
+        [-30,0],
+    ];
+
+    var getDirect = function(from,to){
+        to = points[to];
+        from = points[from];
+        var k = 11;
+        var x = to[0] - from[0],
+            y = to[1] - from[1],
+            x0 = Math.abs(x),
+            y0 = Math.abs(y);
+
+        if(x0 >= k * y0 && x >= 0){
+            return 'dong';
+        }
+        else if(x0 >= k * y0){
+            return 'xi';
+        }
+        else if(y >= k * x0){
+            return 'nan';
+        }
+        else if(y <= -k * x0){
+            return 'bei';
+        }
+        else if(x > 0 && y > 0){
+            return 'dongnan';
+        }
+        else if(x > 0 && y < 0){
+            return 'dongbei';
+        }
+        else if(x < 0 && y > 0){
+            return 'xinan';
+        }
+        else if(x < 0 && y < 0){
+            return 'xibei';
+        }
+    }
+
+    var getAngles = function(from,to){
+        to = points[to];
+        from = points[from];
+        var tan = (to[1] - from[1]) / (to[0] - from[0]);
+        var angle = Math.atan(tan);
+        return angle;
+    }
+</script>

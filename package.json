@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "dev": "node tools/dev.js"
+  },
+  "dependencies": {
+    "ts-loader": "^2.3.0"
+  },
+  "devDependencies": {
+    "fuse-box": "^2.2.2"
+  }
+}
