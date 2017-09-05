@@ -917,6 +917,11 @@ function generateRealDom(vNode) {
             node.addEventListener('keyup', vNode.duplex);
             // node.addEventListener("change",vNode.duplex);
         }
+        if (vNode.eventHandler) {
+            for (var eventName in vNode.eventHandler) {
+                node.addEventListener(eventName, vNode.eventHandler[eventName]);
+            }
+        }
         return node;
     }
 }
@@ -1085,6 +1090,24 @@ var Widget = (function () {
                     }
                 }
                 for (var name in ast.attributes) {
+                    if (name[0] == ':') {
+                        vdomNode.eventHandler = vdomNode.eventHandler || {};
+                        var ename = name.substr(1);
+                        if (ast.eventHandler && ast.eventHandler[ename]) {
+                            vdomNode.eventHandler[ename] = ast.eventHandler[ename];
+                        }
+                        else {
+                            ast.eventHandler = ast.eventHandler || {};
+                            vdomNode.eventHandler[ename] = ast.eventHandler[ename] || (function () {
+                                var _a = _this.generateContextCode(contextStack), head = _a[0], tail = _a[1];
+                                var code = "\n                                         return function(e){\n                                             " + head.join(" ") + "\n                                             return (" + ast.attributes[name] + ");\n                                             " + tail.join(" ") + "\n                                         }\n                                     ";
+                                var f = new Function('contextStack', code);
+                                return f.call(_this, contextStack);
+                            })();
+                        }
+                        delete ast.attributes[name];
+                        continue;
+                    }
                     vdomNode.attributes[name] = ast.attributes[name].replace(/~([\s\S]+?)~/g, function (a, b) {
                         return _this.renderText(ast, contextStack);
                     });

@@ -19,6 +19,9 @@ export interface VElementNode {
     tagName: string;
     dom?: Node;
     duplex? : Function;
+    eventHandler? : {
+        [key : string] : Function
+    }
 }
 
 export type VDomNode = VTextNode | VElementNode
@@ -251,6 +254,11 @@ export function generateRealDom(vNode: VDomNode): Node {
         if(vNode.duplex){
             node.addEventListener('keyup',vNode.duplex);
             // node.addEventListener("change",vNode.duplex);
+        }
+        if(vNode.eventHandler){
+            for(var eventName in vNode.eventHandler){
+                node.addEventListener(eventName,vNode.eventHandler[eventName]);
+            }
         }
         return node;
     }

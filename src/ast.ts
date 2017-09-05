@@ -19,6 +19,9 @@ export interface ASTNode {
     attributes?: any,
     factory? : Function,
     tagName? : string;
+    eventHandler? : {
+        [key :string] : Function
+    }
 }
 
 export interface ForExpression {

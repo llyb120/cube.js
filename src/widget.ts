@@ -218,13 +218,39 @@ export class Widget {
                                      }
                                  `;
                             var f = new Function('contextStack', code);
-                            return f.call(this,contextStack);
+                            return f.call(this, contextStack);
                         })();
                         vdomNode.duplex = factory;
                     }
 
                 }
                 for (var name in ast.attributes) {
+                    if (name[0] == ':') {
+                        vdomNode.eventHandler = vdomNode.eventHandler || {
+                        };
+                        var ename = name.substr(1);
+                        if (ast.eventHandler && ast.eventHandler[ename]) {
+                            vdomNode.eventHandler[ename] = ast.eventHandler[ename];
+                        }
+                        else {
+                            ast.eventHandler = ast.eventHandler || {};
+                            vdomNode.eventHandler[ename] = ast.eventHandler[ename] || (() => {
+                                let [head, tail] = this.generateContextCode(contextStack);
+                                var code = `
+                                         return function(e){
+                                             ${head.join(" ")}
+                                             return (${ast.attributes[name]});
+                                             ${tail.join(" ")}
+                                         }
+                                     `;
+                                var f = new Function('contextStack', code);
+                                return f.call(this, contextStack);
+                            })();
+                        }
+                        delete ast.attributes[name];
+                        continue;
+                    }
+
                     vdomNode.attributes[name] = ast.attributes[name].replace(/~([\s\S]+?)~/g, (a: string, b: string) => {
                         return this.renderText(ast, contextStack);
                     });
