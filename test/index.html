@@ -9,7 +9,7 @@
     <script src='../dist/bundle.js'></script>
 </head>
 <body>
-    <div c-tpl='cubi'>
+    <div c-tpl='data'>
         <input type='text' :value='d'> 
         <ul>
          ~ each i,v in abc ~
@@ -30,7 +30,7 @@
 </html>
 
 <script>
-    Cube.set("cubi",{
+    Cube.set("data",{
         d : 1,
         abc : [{
             ccc : 1,
@@ -39,55 +39,5 @@
         }]
     });
 
-    var points = [
-        [0,0],
-        [30,0],
-        [30,30],
-        [0,30],
-        [-30,30],
-        [-30,0],
-    ];
-
-    var getDirect = function(from,to){
-        to = points[to];
-        from = points[from];
-        var k = 11;
-        var x = to[0] - from[0],
-            y = to[1] - from[1],
-            x0 = Math.abs(x),
-            y0 = Math.abs(y);
-
-        if(x0 >= k * y0 && x >= 0){
-            return 'dong';
-        }
-        else if(x0 >= k * y0){
-            return 'xi';
-        }
-        else if(y >= k * x0){
-            return 'nan';
-        }
-        else if(y <= -k * x0){
-            return 'bei';
-        }
-        else if(x > 0 && y > 0){
-            return 'dongnan';
-        }
-        else if(x > 0 && y < 0){
-            return 'dongbei';
-        }
-        else if(x < 0 && y > 0){
-            return 'xinan';
-        }
-        else if(x < 0 && y < 0){
-            return 'xibei';
-        }
-    }
-
-    var getAngles = function(from,to){
-        to = points[to];
-        from = points[from];
-        var tan = (to[1] - from[1]) / (to[0] - from[0]);
-        var angle = Math.atan(tan);
-        return angle;
-    }
+    
 </script>
