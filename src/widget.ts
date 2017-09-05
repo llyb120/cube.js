@@ -1,4 +1,4 @@
-import { VDomNode, generateRealDom, diff, patch } from './vdom';
+import { VDomNode, generateRealDom, diff, patch, VElementNode } from './vdom';
 import { log } from './utils';
 import { ASTNode, generateASTTree, ForExpression, IfExpression } from './ast';
 import { Cube } from './cube';
@@ -24,10 +24,10 @@ export class Widget {
         this.dataKey = this.astTree.attributes['c-tpl'];
 
         //初次渲染
-        
+
     }
 
-    render(){
+    render() {
         log("重新渲染中");
         var vdom = this.renderVirtualDom();
         this.renderDom(vdom);
@@ -37,20 +37,20 @@ export class Widget {
      * 渲染函数
      * @param vdom 
      */
-    renderDom(vdom : VDomNode) {
+    renderDom(vdom: VDomNode) {
         //初次渲染，整体生成dom
-        if(!this.vdom){
+        if (!this.vdom) {
             var rDom = generateRealDom(vdom);
             this.vdom = vdom;
-            if(this.elem.parentNode){
-                this.elem.parentNode.replaceChild(rDom,this.elem);
+            if (this.elem.parentNode) {
+                this.elem.parentNode.replaceChild(rDom, this.elem);
                 this.elem = rDom;
             }
         }
-        else{
-            var dif = diff(this.vdom,vdom);
+        else {
+            var dif = diff(this.vdom, vdom);
             patch(dif);
-            console.warn("diff is",dif);
+            console.warn("diff is", dif);
             // var rDom = generateRealDom(vdom);
             // this.vdom = vdom; 
             // if(this.elem.parentNode){
@@ -86,14 +86,7 @@ export class Widget {
                 if (<ForExpression>(<any>ast.expInfo).obj) {
                     factory = ast.factory || (() => {
                         let expression = <ForExpression>(<any>ast.expInfo);
-                        expression.key = expression.key || '$index' + this.$indexCount;
-                        var codeBufferHead: string[] = ['try{'],
-                            codeBufferTail: string[] = [];
-                        contextStack.forEach((context, contextKey) => {
-                            codeBufferHead.push('with(contextStack[' + contextKey + ']){');
-                            codeBufferTail.push('}');
-                        });
-                        codeBufferTail.push("}catch(e){ console.error(e) }");
+                        let [codeBufferHead, codeBufferTail] = this.generateContextCode(contextStack);
                         var code = `
                             var _this = this;
                             var _result = [];
@@ -131,45 +124,39 @@ export class Widget {
                 else if ((ast.expInfo as IfExpression).ifs) {
                     factory = ast.factory || (() => {
                         let expression = <IfExpression>(<any>ast.expInfo);
-                        var codeBufferHead: string[] = ['try{'],
-                            codeBufferTail: string[] = [];
-                        contextStack.forEach((context, contextKey) => {
-                            codeBufferHead.push('with(contextStack[' + contextKey + ']){');
-                            codeBufferTail.push('}');
-                        });
-                        codeBufferTail.push("}catch(e){ console.error(e) }");
+                        let [codeBufferHead, codeBufferTail] = this.generateContextCode(contextStack);
                         var code = `
                             var _this = this;
                             var _result = [];
                             ${codeBufferHead.join(" ")}
                             ${
-                                (() => {
-                                    let _code : string[] = [];
-                                    expression.ifs.forEach((ife,key) => {
-                                        if(key == 0){
-                                            _code.push(`if(${ife.condition}){`);
-                                        }
-                                        else{
-                                            _code.push(`else if(${ife.condition}){`)
-                                        }
-                                        _code.push(`
+                            (() => {
+                                let _code: string[] = [];
+                                expression.ifs.forEach((ife, key) => {
+                                    if (key == 0) {
+                                        _code.push(`if(${ife.condition}){`);
+                                    }
+                                    else {
+                                        _code.push(`else if(${ife.condition}){`)
+                                    }
+                                    _code.push(`
                                             ast.expInfo.ifs[${key}].nodes.forEach(function(astNode){
                                                 _result = _result.concat(_this.walk(astNode,contextStack));
                                             }); 
                                         `);
-                                        _code.push("}");
-                                    });
-                                    if(expression.els != null){
-                                        _code.push("else{");
-                                        _code.push(`
+                                    _code.push("}");
+                                });
+                                if (expression.els != null) {
+                                    _code.push("else{");
+                                    _code.push(`
                                             ast.expInfo.els.forEach(function(astNode){
                                              _result = _result.concat(_this.walk(astNode,contextStack));
                                             }); 
                                         `);
-                                        _code.push("}");
-                                    }
-                                    return _code.join(" ");
-                                })()
+                                    _code.push("}");
+                                }
+                                return _code.join(" ");
+                            })()
                             }
         
                             ${codeBufferTail.join(" ")};
@@ -196,10 +183,11 @@ export class Widget {
 
             //元素
             case 'element':
-                vdomNode = {
+                vdomNode = <VElementNode>{
                     children: [],
                     attributes: {},
-                    tagName : ast.tagName as string
+                    tagName: ast.tagName as string,
+                    duplex: undefined
                 };
                 //渲染子节点
                 for (var i = 0; i < ast.children.length; i++) {
@@ -207,25 +195,67 @@ export class Widget {
                     vdomNode.children = vdomNode.children.concat(ret);
                 }
                 //渲染属性
+                //如果存在双向绑定的节点
+                if (ast.tagName == 'INPUT' && ast.attributes[':value']) {
+                    if (ast.attributes.type == 'radio') {
+
+                    }
+                    else if (ast.attributes.type == 'checkbox') {
+
+                    }
+                    //如果这个节点被双向绑定
+                    //input文本节点
+                    else {
+                        console.log("该元素被双向绑定")
+                        factory = ast.factory || (() => {
+                            let [head, tail] = this.generateContextCode(contextStack);
+                            var code = `
+                                     return function(e){
+                                         ${head.join(" ")}
+                                         var target = e.target;
+                                         ${ast.attributes[":value"]} = target.value;
+                                         ${tail.join(" ")}
+                                     }
+                                 `;
+                            var f = new Function('contextStack', code);
+                            return f.call(this,contextStack);
+                        })();
+                        vdomNode.duplex = factory;
+                    }
+
+                }
                 for (var name in ast.attributes) {
                     vdomNode.attributes[name] = ast.attributes[name].replace(/~([\s\S]+?)~/g, (a: string, b: string) => {
                         return this.renderText(ast, contextStack);
                     });
+                    //清除为空的节点
+                    if (vdomNode.attributes[name] == '') {
+                        delete vdomNode.attributes[name];
+                    }
                 }
                 return [vdomNode];
         }
         return [];
     }
 
+    /**
+     * 生成代码的作用域
+     * @param contextStack 
+     */
+    generateContextCode(contextStack: any[]): [string[], string[]] {
+        var codeBufferHead: string[] = ['try{'],
+            codeBufferTail: string[] = [];
+        contextStack.forEach((context, contextKey) => {
+            codeBufferHead.push('with(contextStack[' + contextKey + ']){');
+            codeBufferTail.push('}');
+        });
+        codeBufferTail.push("}catch(e){ console.error(e) }");
+        return [codeBufferHead, codeBufferTail];
+    }
+
     renderText(ast: ASTNode, contextStack: any[]) {
         var factory = ast.factory || (() => {
-            var codeBufferHead: string[] = ['try{'],
-                codeBufferTail: string[] = [];
-            contextStack.forEach((context, contextKey) => {
-                codeBufferHead.push('with(contextStack[' + contextKey + ']){');
-                codeBufferTail.push('}');
-            });
-            codeBufferTail.push("}catch(e){ console.error(e) }");
+            let [codeBufferHead, codeBufferTail] = this.generateContextCode(contextStack);
             var code = `
                 var _result;
                 ${codeBufferHead.join(" ")} 

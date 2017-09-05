@@ -68,7 +68,7 @@ export function generateASTTree(domNode: HTMLElement, parentNode?: ASTNode): AST
             var attrNode = domNode.attributes[i];
             thisNode.attributes[attrNode.nodeName] = attrNode.nodeValue;
         }
-        console.log(clone(thisNode.children));
+        // console.log(clone(thisNode.children));
         //规约子节点
         var stack: (ASTNode | null)[] = [];
         var values: (ForExpression | IfExpression)[] = [];

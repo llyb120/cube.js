@@ -1,41 +1,41 @@
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-/******/
+
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-/******/
+
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
+/******/ 		if(installedModules[moduleId])
 /******/ 			return installedModules[moduleId].exports;
-/******/ 		}
+
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
 /******/ 			l: false,
 /******/ 			exports: {}
 /******/ 		};
-/******/
+
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
+
 /******/ 		// Flag the module as loaded
 /******/ 		module.l = true;
-/******/
+
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/
-/******/
+
+
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-/******/
+
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-/******/
+
 /******/ 	// identity function for calling harmony imports with the correct context
 /******/ 	__webpack_require__.i = function(value) { return value; };
-/******/
+
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
@@ -46,7 +46,7 @@
 /******/ 			});
 /******/ 		}
 /******/ 	};
-/******/
+
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
 /******/ 	__webpack_require__.n = function(module) {
 /******/ 		var getter = module && module.__esModule ?
@@ -55,19 +55,110 @@
 /******/ 		__webpack_require__.d(getter, 'a', getter);
 /******/ 		return getter;
 /******/ 	};
-/******/
+
 /******/ 	// Object.prototype.hasOwnProperty.call
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
+
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
-/******/
+
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 7);
 /******/ })
 /************************************************************************/
 /******/ ([
-/* 0 */,
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+exports.__esModule = true;
+var widget_1 = __webpack_require__(5);
+var domready = __webpack_require__(6);
+var Cube = (function () {
+    function Cube() {
+        this.$data = {};
+        this.$widgets = [];
+        this.$observer = {};
+        // each(obj : any[] | any,callback : Function){
+        //     if(Array.isArray(obj)){
+        //         for(let i = 0; i < obj.length; i++){
+        //             callback.call(null,i,obj[i]);   
+        //         }
+        //     }
+        //     else{
+        //         for(let i in obj){
+        //             callback.call(null,i,obj[i]);
+        //         }
+        //     }
+        // }
+    }
+    Cube.prototype.start = function () {
+        var _this = this;
+        domready.Ready(function () {
+            var elems = document.querySelectorAll("[c-tpl]");
+            for (var i = 0; i < elems.length; i++) {
+                _this.$widgets.push(new widget_1.Widget(elems[i]));
+                // var vdom = scan(<HTMLElement>elems[i]);
+                // log(vdom);
+            }
+            _this.startToObserve();
+        });
+    };
+    Cube.prototype.set = function (key, val) {
+        this.$data[key] = val;
+    };
+    Cube.prototype.get = function (key) {
+        return this.$data[key] || null;
+    };
+    Cube.prototype.startToObserve = function () {
+        var _this = this;
+        var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+        if (!requestAnimationFrame) {
+            requestAnimationFrame = function (fn) { return setTimeout(fn, 17); };
+        }
+        var start = null;
+        var timelimit = 0;
+        var step = function (timestamp) {
+            if (start === null)
+                start = timestamp;
+            var progress = timestamp - start;
+            timelimit += 17;
+            if (timelimit > 50) {
+                timelimit = 0;
+                _this.$widgets.forEach(function (widget) {
+                    //如果上一个时间点已经确定需要渲染，那么不进行脏检测，直接重新渲染
+                    do {
+                        if (widget.needToRerender) {
+                            if (widget.delay) {
+                                widget.delay = false;
+                                break;
+                            }
+                            widget.needToRerender = false;
+                            widget.render();
+                            return;
+                        }
+                    } while (0);
+                    var key = widget.dataKey;
+                    var json = JSON.stringify(_this.$data[key]);
+                    //当脏检测触发的时候，推迟到下一个时间点进行渲染，降低单一渲染的压力
+                    if (json != _this.$observer[key]) {
+                        widget.needToRerender = true;
+                        widget.delay = true;
+                        _this.$observer[key] = json;
+                    }
+                });
+            }
+            requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    };
+    return Cube;
+}());
+exports.Cube = Cube;
+
+
+/***/ }),
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -265,10 +356,139 @@ if (!Array.prototype.forEach) {
 }
 
 if (!Array.isArray) {
-    Array.isArray = function(arg) {
-      return Object.prototype.toString.call(arg) === '[object Array]';
+    Array.isArray = function (arg) {
+        return Object.prototype.toString.call(arg) === '[object Array]';
     };
-  }
+}
+
+
+//addEventlistener
+//ie8-eventlistener.js 
+-
+[1, ] || (function () {
+
+    //为window对象添加 
+    addEventListener = function (n, f) {
+
+        if ("on" + n in this.constructor.prototype)
+
+            this.attachEvent("on" + n, f);
+
+        else {
+
+            var o = this.customEvents = this.customEvents || {};
+
+            n in o ? o[n].push(f) : (o[n] = [f]);
+
+        };
+
+    };
+
+    removeEventListener = function (n, f) {
+
+        if ("on" + n in this.constructor.prototype)
+
+            this.detachEvent("on" + n, f);
+
+        else {
+
+            var s = this.customEvents && this.customEvents[n];
+
+            if (s)
+                for (var i = 0; i < s.length; i++)
+
+                    if (s[i] == f) return void s.splice(i, 1);
+
+        };
+
+    };
+
+    dispatchEvent = function (e) {
+
+        if ("on" + e.type in this.constructor.prototype)
+
+            this.fireEvent("on" + e.type, e);
+
+        else {
+
+            var s = this.customEvents && this.customEvents[e.type];
+
+            if (s)
+                for (var s = s.slice(0), i = 0; i < s.length; i++)
+
+                    s[i].call(this, e);
+
+        }
+
+    };
+
+    //为document对象添加
+
+    HTMLDocument.prototype.addEventListener = addEventListener;
+
+    HTMLDocument.prototype.removeEventListener = removeEventListener;
+
+    HTMLDocument.prototype.dispatchEvent = dispatchEvent;
+
+    HTMLDocument.prototype.createEvent = function () {
+
+        var e = document.createEventObject();
+
+        e.initMouseEvent = function (en) {
+            this.type = en;
+        };
+
+        e.initEvent = function (en) {
+            this.type = en;
+        };
+        return e;
+    };
+
+    //为全元素添加
+
+    var tags = [
+
+            "Unknown", "UList", "Title", "TextArea", "TableSection", "TableRow", "Table", "TableCol", "TableCell", "TableCaption", "Style", "Span",
+
+            "Select", "Script", "Param", "Paragraph", "Option", "Object", "OList", "Meta", "Marquee", "Map", "Link", "Legend", "Label", "LI", "Input",
+
+            "Image", "IFrame", "Html", "Heading", "Head", "HR", "FrameSet", "Frame", "Form", "Font", "FieldSet", "Embed", "Div", "DList", "Button", "Body", "Base", "BR", "Area", "Anchor"
+
+        ],
+        html5tags = [
+
+            "abbr", "article", "aside", "audio", "canvas", "datalist", "details", "dialog", "eventsource", "figure", "footer", "header", "hgroup", "mark", "menu", "meter", "nav", "output", "progress", "section", "time", "video"
+
+        ],
+        properties = {
+
+            addEventListener: {
+                value: addEventListener
+            },
+
+            removeEventListener: {
+                value: removeEventListener
+            },
+
+            dispatchEvent: {
+                value: dispatchEvent
+            }
+
+        };
+
+    for (var o, n, i = 0; o = window["HTML" + tags[i] + "Element"]; i++)
+
+        tags[i] = o.prototype;
+
+    for (i = 0; i < html5tags.length; i++)
+
+        tags.push(document.createElement(html5tags[i]).constructor.prototype);
+
+    for (i = 0; o = tags[i]; i++)
+
+        for (n in properties) Object.defineProperty(o, n, properties[n]);
+
+})();
 
 /***/ }),
 /* 3 */
@@ -316,7 +536,7 @@ function generateASTTree(domNode, parentNode) {
             var attrNode = domNode.attributes[i];
             thisNode.attributes[attrNode.nodeName] = attrNode.nodeValue;
         }
-        console.log(utils_1.clone(thisNode.children));
+        // console.log(clone(thisNode.children));
         //规约子节点
         var stack = [];
         var values = [];
@@ -488,20 +708,6 @@ function splitTextNode(value) {
 
 /***/ }),
 /* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-exports.__esModule = true;
-var cube_1 = __webpack_require__(8);
-__webpack_require__(2);
-var cube = cube_1.Cube.$instance = new cube_1.Cube;
-window.Cube = cube;
-cube.start();
-
-
-/***/ }),
-/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -706,6 +912,11 @@ function generateRealDom(vNode) {
             node.appendChild(generateRealDom(child));
         }
         vNode.dom = node;
+        //双向绑定的处理
+        if (vNode.duplex) {
+            node.addEventListener('keyup', vNode.duplex);
+            // node.addEventListener("change",vNode.duplex);
+        }
         return node;
     }
 }
@@ -713,16 +924,16 @@ exports.generateRealDom = generateRealDom;
 
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 exports.__esModule = true;
-var vdom_1 = __webpack_require__(5);
+var vdom_1 = __webpack_require__(4);
 var utils_1 = __webpack_require__(1);
 var ast_1 = __webpack_require__(3);
-var cube_1 = __webpack_require__(8);
+var cube_1 = __webpack_require__(0);
 var Widget = (function () {
     function Widget(elem) {
         this.elem = elem;
@@ -797,13 +1008,7 @@ var Widget = (function () {
                 if (ast.expInfo.obj) {
                     factory = ast.factory || (function () {
                         var expression = ast.expInfo;
-                        expression.key = expression.key || '$index' + _this.$indexCount;
-                        var codeBufferHead = ['try{'], codeBufferTail = [];
-                        contextStack.forEach(function (context, contextKey) {
-                            codeBufferHead.push('with(contextStack[' + contextKey + ']){');
-                            codeBufferTail.push('}');
-                        });
-                        codeBufferTail.push("}catch(e){ console.error(e) }");
+                        var _a = _this.generateContextCode(contextStack), codeBufferHead = _a[0], codeBufferTail = _a[1];
                         var code = "\n                            var _this = this;\n                            var _result = [];\n                            " + codeBufferHead.join(" ") + "\n                            var each = function(obj,callback){\n                                if(Array.isArray(obj)){\n                                    for(var i = 0; i < obj.length; i++){\n                                        callback.call(_this,i,obj[i]);   \n                                    }\n                                }\n                                else{\n                                    for(var i in obj){\n                                        callback.call(_this,i,obj[i]);\n                                    }\n                                }\n                            };\n                            each(" + expression.obj + ",function(" + expression.key + "," + expression.value + "){\n                                var newContextStack = contextStack.concat();\n                                newContextStack.push({\n                                    " + expression.value + " : " + expression.value + ",\n                                    " + expression.key + " : " + expression.key + " \n                                });\n                                ast.children.forEach(function(astNode){\n                                    _result = _result.concat(_this.walk(astNode,newContextStack));\n                                });\n                            });\n                            " + codeBufferTail.join(" ") + ";\n                            return _result;\n                        ";
                         return new Function('ast', 'contextStack', code);
                     })();
@@ -812,12 +1017,7 @@ var Widget = (function () {
                 else if (ast.expInfo.ifs) {
                     factory = ast.factory || (function () {
                         var expression = ast.expInfo;
-                        var codeBufferHead = ['try{'], codeBufferTail = [];
-                        contextStack.forEach(function (context, contextKey) {
-                            codeBufferHead.push('with(contextStack[' + contextKey + ']){');
-                            codeBufferTail.push('}');
-                        });
-                        codeBufferTail.push("}catch(e){ console.error(e) }");
+                        var _a = _this.generateContextCode(contextStack), codeBufferHead = _a[0], codeBufferTail = _a[1];
                         var code = "\n                            var _this = this;\n                            var _result = [];\n                            " + codeBufferHead.join(" ") + "\n                            " + (function () {
                             var _code = [];
                             expression.ifs.forEach(function (ife, key) {
@@ -858,7 +1058,8 @@ var Widget = (function () {
                 vdomNode = {
                     children: [],
                     attributes: {},
-                    tagName: ast.tagName
+                    tagName: ast.tagName,
+                    duplex: undefined
                 };
                 //渲染子节点
                 for (var i = 0; i < ast.children.length; i++) {
@@ -866,23 +1067,53 @@ var Widget = (function () {
                     vdomNode.children = vdomNode.children.concat(ret);
                 }
                 //渲染属性
+                //如果存在双向绑定的节点
+                if (ast.tagName == 'INPUT' && ast.attributes[':value']) {
+                    if (ast.attributes.type == 'radio') {
+                    }
+                    else if (ast.attributes.type == 'checkbox') {
+                    }
+                    else {
+                        console.log("该元素被双向绑定");
+                        factory = ast.factory || (function () {
+                            var _a = _this.generateContextCode(contextStack), head = _a[0], tail = _a[1];
+                            var code = "\n                                     return function(e){\n                                         " + head.join(" ") + "\n                                         var target = e.target;\n                                         " + ast.attributes[":value"] + " = target.value;\n                                         " + tail.join(" ") + "\n                                     }\n                                 ";
+                            var f = new Function('contextStack', code);
+                            return f.call(_this, contextStack);
+                        })();
+                        vdomNode.duplex = factory;
+                    }
+                }
                 for (var name in ast.attributes) {
                     vdomNode.attributes[name] = ast.attributes[name].replace(/~([\s\S]+?)~/g, function (a, b) {
                         return _this.renderText(ast, contextStack);
                     });
+                    //清除为空的节点
+                    if (vdomNode.attributes[name] == '') {
+                        delete vdomNode.attributes[name];
+                    }
                 }
                 return [vdomNode];
         }
         return [];
     };
+    /**
+     * 生成代码的作用域
+     * @param contextStack
+     */
+    Widget.prototype.generateContextCode = function (contextStack) {
+        var codeBufferHead = ['try{'], codeBufferTail = [];
+        contextStack.forEach(function (context, contextKey) {
+            codeBufferHead.push('with(contextStack[' + contextKey + ']){');
+            codeBufferTail.push('}');
+        });
+        codeBufferTail.push("}catch(e){ console.error(e) }");
+        return [codeBufferHead, codeBufferTail];
+    };
     Widget.prototype.renderText = function (ast, contextStack) {
+        var _this = this;
         var factory = ast.factory || (function () {
-            var codeBufferHead = ['try{'], codeBufferTail = [];
-            contextStack.forEach(function (context, contextKey) {
-                codeBufferHead.push('with(contextStack[' + contextKey + ']){');
-                codeBufferTail.push('}');
-            });
-            codeBufferTail.push("}catch(e){ console.error(e) }");
+            var _a = _this.generateContextCode(contextStack), codeBufferHead = _a[0], codeBufferTail = _a[1];
             var code = "\n                var _result;\n                " + codeBufferHead.join(" ") + " \n                _result = " + ast.value + ";\n                " + codeBufferTail.join(" ") + "\n                return _result;\n            ";
             return new Function('ast', 'contextStack', code);
         })();
@@ -895,7 +1126,7 @@ exports.Widget = Widget;
 
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports) {
 
 dom = [];
@@ -944,95 +1175,17 @@ dom.initReady = function() {
 module.exports = dom;
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 exports.__esModule = true;
-var widget_1 = __webpack_require__(6);
-var domready = __webpack_require__(7);
-var Cube = (function () {
-    function Cube() {
-        this.$data = {};
-        this.$widgets = [];
-        this.$observer = {};
-        // each(obj : any[] | any,callback : Function){
-        //     if(Array.isArray(obj)){
-        //         for(let i = 0; i < obj.length; i++){
-        //             callback.call(null,i,obj[i]);   
-        //         }
-        //     }
-        //     else{
-        //         for(let i in obj){
-        //             callback.call(null,i,obj[i]);
-        //         }
-        //     }
-        // }
-    }
-    Cube.prototype.start = function () {
-        var _this = this;
-        domready.Ready(function () {
-            var elems = document.querySelectorAll("[c-tpl]");
-            for (var i = 0; i < elems.length; i++) {
-                _this.$widgets.push(new widget_1.Widget(elems[i]));
-                // var vdom = scan(<HTMLElement>elems[i]);
-                // log(vdom);
-            }
-            _this.startToObserve();
-        });
-    };
-    Cube.prototype.set = function (key, val) {
-        this.$data[key] = val;
-    };
-    Cube.prototype.get = function (key) {
-        return this.$data[key] || null;
-    };
-    Cube.prototype.startToObserve = function () {
-        var _this = this;
-        var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-        if (!requestAnimationFrame) {
-            requestAnimationFrame = function (fn) { return setTimeout(fn, 17); };
-        }
-        var start = null;
-        var timelimit = 0;
-        var step = function (timestamp) {
-            if (start === null)
-                start = timestamp;
-            var progress = timestamp - start;
-            timelimit += 17;
-            if (timelimit > 100) {
-                timelimit = 0;
-                _this.$widgets.forEach(function (widget) {
-                    //如果上一个时间点已经确定需要渲染，那么不进行脏检测，直接重新渲染
-                    do {
-                        if (widget.needToRerender) {
-                            if (widget.delay) {
-                                widget.delay = false;
-                                break;
-                            }
-                            widget.needToRerender = false;
-                            widget.render();
-                            return;
-                        }
-                    } while (0);
-                    var key = widget.dataKey;
-                    var json = JSON.stringify(_this.$data[key]);
-                    //当脏检测触发的时候，推迟到下一个时间点进行渲染，降低单一渲染的压力
-                    if (json != _this.$observer[key]) {
-                        widget.needToRerender = true;
-                        widget.delay = true;
-                        _this.$observer[key] = json;
-                    }
-                });
-            }
-            requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-    };
-    return Cube;
-}());
-exports.Cube = Cube;
+var cube_1 = __webpack_require__(0);
+__webpack_require__(2);
+var cube = cube_1.Cube.$instance = new cube_1.Cube;
+window.Cube = cube;
+cube.start();
 
 
 /***/ })

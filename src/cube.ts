@@ -42,7 +42,7 @@ export class Cube {
             if (start === null) start = timestamp;
             var progress = timestamp - start;
             timelimit += 17;
-            if (timelimit > 100) {
+            if (timelimit > 50) {
                 timelimit = 0;
                 this.$widgets.forEach(widget => {
                     //如果上一个时间点已经确定需要渲染，那么不进行脏检测，直接重新渲染

@@ -18,6 +18,7 @@ export interface VElementNode {
     attributes: any;
     tagName: string;
     dom?: Node;
+    duplex? : Function;
 }
 
 export type VDomNode = VTextNode | VElementNode
@@ -246,6 +247,11 @@ export function generateRealDom(vNode: VDomNode): Node {
             node.appendChild(generateRealDom(child));
         }
         vNode.dom = node;
+        //双向绑定的处理
+        if(vNode.duplex){
+            node.addEventListener('keyup',vNode.duplex);
+            // node.addEventListener("change",vNode.duplex);
+        }
         return node;
     }
 }

@@ -10,6 +10,7 @@
 </head>
 <body>
     <div c-tpl='cubi'>
+        <input type='text' :value='d'> 
         <ul>
          ~ each i,v in abc ~
                 ~ each item in v ~
@@ -23,12 +24,14 @@
                 ~ end ~
             ~ end ~
         </ul>
+        ~ d ~
     </div>
 </body>
 </html>
 
 <script>
     Cube.set("cubi",{
+        d : 1,
         abc : [{
             ccc : 1,
         },{
