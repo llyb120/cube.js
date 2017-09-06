@@ -1105,16 +1105,19 @@ var Widget = (function () {
                                 return f.call(_this, contextStack);
                             })();
                         }
-                        delete ast.attributes[name];
+                        // delete ast.attributes[name];
                         continue;
                     }
                     vdomNode.attributes[name] = ast.attributes[name].replace(/~([\s\S]+?)~/g, function (a, b) {
-                        return _this.renderText(ast, contextStack);
+                        return _this.renderText(ast, contextStack, b);
                     });
                     //清除为空的节点
                     if (vdomNode.attributes[name] == '') {
                         delete vdomNode.attributes[name];
                     }
+                }
+                if (ast.attributes[':value']) {
+                    vdomNode.attributes.value = this.renderText(ast, contextStack, ast.attributes[':value']);
                 }
                 return [vdomNode];
         }
@@ -1133,11 +1136,11 @@ var Widget = (function () {
         codeBufferTail.push("}catch(e){ console.error(e) }");
         return [codeBufferHead, codeBufferTail];
     };
-    Widget.prototype.renderText = function (ast, contextStack) {
+    Widget.prototype.renderText = function (ast, contextStack, value) {
         var _this = this;
         var factory = ast.factory || (function () {
             var _a = _this.generateContextCode(contextStack), codeBufferHead = _a[0], codeBufferTail = _a[1];
-            var code = "\n                var _result;\n                " + codeBufferHead.join(" ") + " \n                _result = " + ast.value + ";\n                " + codeBufferTail.join(" ") + "\n                return _result;\n            ";
+            var code = "\n                var _result;\n                " + codeBufferHead.join(" ") + " \n                _result = " + (value || ast.value) + ";\n                " + codeBufferTail.join(" ") + "\n                return _result;\n            ";
             return new Function('ast', 'contextStack', code);
         })();
         var val = factory.call(this, ast, contextStack);

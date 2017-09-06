@@ -222,8 +222,8 @@ export class Widget {
                         })();
                         vdomNode.duplex = factory;
                     }
-
                 }
+
                 for (var name in ast.attributes) {
                     if (name[0] == ':') {
                         vdomNode.eventHandler = vdomNode.eventHandler || {
@@ -247,17 +247,21 @@ export class Widget {
                                 return f.call(this, contextStack);
                             })();
                         }
-                        delete ast.attributes[name];
+                        // delete ast.attributes[name];
                         continue;
                     }
 
                     vdomNode.attributes[name] = ast.attributes[name].replace(/~([\s\S]+?)~/g, (a: string, b: string) => {
-                        return this.renderText(ast, contextStack);
+                        return this.renderText(ast, contextStack,b);
                     });
                     //清除为空的节点
                     if (vdomNode.attributes[name] == '') {
                         delete vdomNode.attributes[name];
                     }
+                }
+
+                if(ast.attributes[':value']){
+                    vdomNode.attributes.value = this.renderText(ast,contextStack,ast.attributes[':value']);
                 }
                 return [vdomNode];
         }
@@ -279,13 +283,13 @@ export class Widget {
         return [codeBufferHead, codeBufferTail];
     }
 
-    renderText(ast: ASTNode, contextStack: any[]) {
+    renderText(ast: ASTNode, contextStack: any[], value? : any) {
         var factory = ast.factory || (() => {
             let [codeBufferHead, codeBufferTail] = this.generateContextCode(contextStack);
             var code = `
                 var _result;
                 ${codeBufferHead.join(" ")} 
-                _result = ${ast.value};
+                _result = ${value || ast.value};
                 ${codeBufferTail.join(" ")}
                 return _result;
             `;
