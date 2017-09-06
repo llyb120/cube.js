@@ -10,6 +10,7 @@ export class Widget {
     private $indexCount = 0;
     public delay = false;
     public needToRerender = false;
+    public ignoreAttributes : any[];
 
     constructor(public elem: Node) {
         this.astTree = <ASTNode>generateASTTree(<HTMLElement>elem);
@@ -23,6 +24,10 @@ export class Widget {
         }
         this.dataKey = this.astTree.attributes['c-tpl'];
 
+        this.ignoreAttributes = [
+            'data',
+            'value'
+        ];
         //初次渲染
 
     }
@@ -226,29 +231,32 @@ export class Widget {
 
                 for (var name in ast.attributes) {
                     if (name[0] == ':') {
-                        vdomNode.eventHandler = vdomNode.eventHandler || {
-                        };
                         var ename = name.substr(1);
-                        if (ast.eventHandler && ast.eventHandler[ename]) {
-                            vdomNode.eventHandler[ename] = ast.eventHandler[ename];
+                        //事件处理器
+                        if(this.ignoreAttributes.indexOf(ename) === -1){
+                            vdomNode.eventHandler = vdomNode.eventHandler || {
+                            };
+                            if (ast.eventHandler && ast.eventHandler[ename]) {
+                                vdomNode.eventHandler[ename] = ast.eventHandler[ename];
+                            }
+                            else {
+                                ast.eventHandler = ast.eventHandler || {};
+                                vdomNode.eventHandler[ename] = ast.eventHandler[ename] || (() => {
+                                    let [head, tail] = this.generateContextCode(contextStack);
+                                    var code = `
+                                             return function(e){
+                                                 ${head.join(" ")}
+                                                 return (${ast.attributes[name]});
+                                                 ${tail.join(" ")}
+                                             }
+                                         `;
+                                    var f = new Function('contextStack', code);
+                                    return f.call(this, contextStack);
+                                })();
+                            }
+                            delete ast.attributes[name];
+                            continue;
                         }
-                        else {
-                            ast.eventHandler = ast.eventHandler || {};
-                            vdomNode.eventHandler[ename] = ast.eventHandler[ename] || (() => {
-                                let [head, tail] = this.generateContextCode(contextStack);
-                                var code = `
-                                         return function(e){
-                                             ${head.join(" ")}
-                                             return (${ast.attributes[name]});
-                                             ${tail.join(" ")}
-                                         }
-                                     `;
-                                var f = new Function('contextStack', code);
-                                return f.call(this, contextStack);
-                            })();
-                        }
-                        // delete ast.attributes[name];
-                        continue;
                     }
 
                     vdomNode.attributes[name] = ast.attributes[name].replace(/~([\s\S]+?)~/g, (a: string, b: string) => {

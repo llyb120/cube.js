@@ -955,6 +955,10 @@ var Widget = (function () {
             utils_1.log("无法获取数据");
         }
         this.dataKey = this.astTree.attributes['c-tpl'];
+        this.ignoreAttributes = [
+            'data',
+            'value'
+        ];
         //初次渲染
     }
     Widget.prototype.render = function () {
@@ -1091,22 +1095,25 @@ var Widget = (function () {
                 }
                 for (var name in ast.attributes) {
                     if (name[0] == ':') {
-                        vdomNode.eventHandler = vdomNode.eventHandler || {};
                         var ename = name.substr(1);
-                        if (ast.eventHandler && ast.eventHandler[ename]) {
-                            vdomNode.eventHandler[ename] = ast.eventHandler[ename];
+                        //事件处理器
+                        if (this.ignoreAttributes.indexOf(ename) === -1) {
+                            vdomNode.eventHandler = vdomNode.eventHandler || {};
+                            if (ast.eventHandler && ast.eventHandler[ename]) {
+                                vdomNode.eventHandler[ename] = ast.eventHandler[ename];
+                            }
+                            else {
+                                ast.eventHandler = ast.eventHandler || {};
+                                vdomNode.eventHandler[ename] = ast.eventHandler[ename] || (function () {
+                                    var _a = _this.generateContextCode(contextStack), head = _a[0], tail = _a[1];
+                                    var code = "\n                                             return function(e){\n                                                 " + head.join(" ") + "\n                                                 return (" + ast.attributes[name] + ");\n                                                 " + tail.join(" ") + "\n                                             }\n                                         ";
+                                    var f = new Function('contextStack', code);
+                                    return f.call(_this, contextStack);
+                                })();
+                            }
+                            delete ast.attributes[name];
+                            continue;
                         }
-                        else {
-                            ast.eventHandler = ast.eventHandler || {};
-                            vdomNode.eventHandler[ename] = ast.eventHandler[ename] || (function () {
-                                var _a = _this.generateContextCode(contextStack), head = _a[0], tail = _a[1];
-                                var code = "\n                                         return function(e){\n                                             " + head.join(" ") + "\n                                             return (" + ast.attributes[name] + ");\n                                             " + tail.join(" ") + "\n                                         }\n                                     ";
-                                var f = new Function('contextStack', code);
-                                return f.call(_this, contextStack);
-                            })();
-                        }
-                        // delete ast.attributes[name];
-                        continue;
                     }
                     vdomNode.attributes[name] = ast.attributes[name].replace(/~([\s\S]+?)~/g, function (a, b) {
                         return _this.renderText(ast, contextStack, b);

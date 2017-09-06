@@ -9,27 +9,12 @@
     <script src='../dist/bundle.js'></script>
 </head>
 <body>
-    <div :component='path'>
+    <div c-component='path'>
     </div>
+    
 
-    <div c-tpl='data'>
-        <input type='text' :value='d'> 
-        <ul>
-         ~ each i,v in abc ~
-                ~ each item in v ~
-                ~ if Math.random() > 0.5
-                <li>~ item ~ 0.5+</li>
-                ~ else if Math.random() > 0.5 ~
-                <li>else if item</LI>
-                ~ else ~
-                <li>0.5-</li>
-                ~ end ~
-                ~ end ~
-            ~ end ~
-        </ul>
-        ~ d ~
-        <a href='javascript:;' :click="d++">click me</a>
-    </div>
+    <Path c-tpl='data'/>
+
 </body>
 </html>
 
