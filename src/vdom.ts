@@ -216,8 +216,14 @@ export function patch(patchs : VDomPatch[]){
             let node = p.node as VElementNode;
             if(p.type == 'modify'){
                 node.attributes[p.key] = p.value;
+                var dom = node.dom as HTMLElement;
                 if(node.dom){
-                    (node.dom as HTMLElement).setAttribute(p.key,p.value);
+                    if(dom.tagName == 'INPUT' && p.key == 'value'){
+                        dom.value = p.value;
+                    }
+                    else{
+                        (node.dom as HTMLElement).setAttribute(p.key,p.value);
+                    }
                 }
             }
             else if(p.type == 'remove'){
@@ -252,7 +258,7 @@ export function generateRealDom(vNode: VDomNode): Node {
         vNode.dom = node;
         //双向绑定的处理
         if(vNode.duplex){
-            node.addEventListener('keyup',vNode.duplex);
+            node.addEventListener('input',vNode.duplex);
             // node.addEventListener("change",vNode.duplex);
         }
         if(vNode.eventHandler){

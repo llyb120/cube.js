@@ -3,6 +3,8 @@ import { log } from './utils';
 import { ASTNode, generateASTTree, ForExpression, IfExpression } from './ast';
 import { Cube } from './cube';
 
+var InstanceCount = 0;
+
 export class Widget {
     public vdom: VDomNode;
     public dataKey: string;
@@ -11,6 +13,7 @@ export class Widget {
     public delay = false;
     public needToRerender = false;
     public ignoreAttributes : any[];
+    public uuid : number;
 
     constructor(public elem: Node) {
         this.astTree = <ASTNode>generateASTTree(<HTMLElement>elem);
@@ -32,6 +35,8 @@ export class Widget {
             'data',
             'value'
         ];
+
+        this.uuid = (InstanceCount++);
         //初次渲染
 
     }
@@ -39,6 +44,8 @@ export class Widget {
     render() {
         log("重新渲染中");
         var vdom = this.renderVirtualDom();
+        console.log(JSON.stringify(this.vdom))
+        console.log(JSON.stringify(vdom));
         this.renderDom(vdom);
     }
 
@@ -58,8 +65,9 @@ export class Widget {
         }
         else {
             var dif = diff(this.vdom, vdom);
-            patch(dif);
             console.warn("diff is", dif);
+            
+            patch(dif);
             // var rDom = generateRealDom(vdom);
             // this.vdom = vdom; 
             // if(this.elem.parentNode){
@@ -250,7 +258,7 @@ export class Widget {
                                     var code = `
                                              return function(e){
                                                  ${head.join(" ")}
-                                                 (${ast.attributes[name]});
+                                                 ${ast.attributes[name]};
                                                  ${tail.join(" ")}
                                              }
                                          `;
@@ -258,7 +266,7 @@ export class Widget {
                                     return f.call(this, contextStack);
                                 })();
                             }
-                            delete ast.attributes[name];
+                            // delete ast.attributes[name];
                             continue;
                         }
                     }
@@ -274,6 +282,7 @@ export class Widget {
 
                 if(ast.attributes[':value']){
                     vdomNode.attributes.value = this.renderText(ast,contextStack,ast.attributes[':value']);
+                    console.log(vdomNode.attributes);
                 }
                 return [vdomNode];
         }

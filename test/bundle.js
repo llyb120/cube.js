@@ -1109,7 +1109,7 @@ var Widget = (function () {
                                 ast.eventHandler = ast.eventHandler || {};
                                 vdomNode.eventHandler[ename] = ast.eventHandler[ename] || (function () {
                                     var _a = _this.generateContextCode(contextStack), head = _a[0], tail = _a[1];
-                                    var code = "\n                                             return function(e){\n                                                 " + head.join(" ") + "\n                                                 return (" + ast.attributes[name] + ");\n                                                 " + tail.join(" ") + "\n                                             }\n                                         ";
+                                    var code = "\n                                             return function(e){\n                                                 " + head.join(" ") + "\n                                                 " + ast.attributes[name] + ";\n                                                 " + tail.join(" ") + "\n                                             }\n                                         ";
                                     var f = new Function('contextStack', code);
                                     return f.call(_this, contextStack);
                                 })();

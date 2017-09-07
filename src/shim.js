@@ -179,7 +179,17 @@ if (!Array.isArray) {
 
         if ("on" + n in this.constructor.prototype)
 
-            this.attachEvent("on" + n, f);
+            if(n == 'input'){
+                this.attachEvent("onpropertychange",function(){
+                    var event = window.event;
+                    f.call(null,{
+                        target : event.srcElement
+                    });
+                });
+            }
+            else{
+                this.attachEvent("on" + n, f);
+            }
 
         else {
 

@@ -80,6 +80,7 @@ var Cube = (function () {
         this.$data = {};
         this.$widgets = [];
         this.$observer = {};
+        this.$renderTimers = {};
         // each(obj : any[] | any,callback : Function){
         //     if(Array.isArray(obj)){
         //         for(let i = 0; i < obj.length; i++){
@@ -127,25 +128,32 @@ var Cube = (function () {
             if (timelimit > 50) {
                 timelimit = 0;
                 _this.$widgets.forEach(function (widget) {
+                    var timer = _this.$renderTimers[widget.uuid];
                     //如果上一个时间点已经确定需要渲染，那么不进行脏检测，直接重新渲染
-                    do {
-                        if (widget.needToRerender) {
-                            if (widget.delay) {
-                                widget.delay = false;
-                                break;
-                            }
-                            widget.needToRerender = false;
-                            widget.render();
-                            return;
-                        }
-                    } while (0);
+                    // do {
+                    //     if (widget.needToRerender) {
+                    //         if (widget.delay) {
+                    //             widget.delay = false;
+                    //             break;
+                    //         }
+                    //         widget.needToRerender = false;
+                    //         widget.render();
+                    //         return;
+                    //     }
+                    // } while (0);
                     var key = widget.dataKey;
                     var json = JSON.stringify(_this.$data[key]);
                     //当脏检测触发的时候，推迟到下一个时间点进行渲染，降低单一渲染的压力
                     if (json != _this.$observer[key]) {
-                        widget.needToRerender = true;
-                        widget.delay = true;
+                        // widget.needToRerender = true;
+                        // widget.delay = true;
                         _this.$observer[key] = json;
+                        if (timer) {
+                            clearTimeout(timer);
+                        }
+                        _this.$renderTimers[widget.uuid] = setTimeout(function () {
+                            widget.render();
+                        }, 17);
                     }
                 });
             }
@@ -372,7 +380,17 @@ if (!Array.isArray) {
 
         if ("on" + n in this.constructor.prototype)
 
-            this.attachEvent("on" + n, f);
+            if(n == 'input'){
+                this.attachEvent("onpropertychange",function(){
+                    var event = window.event;
+                    f.call(null,{
+                        target : event.srcElement
+                    });
+                });
+            }
+            else{
+                this.attachEvent("on" + n, f);
+            }
 
         else {
 
@@ -877,8 +895,14 @@ function patch(patchs) {
             var node = p.node;
             if (p.type == 'modify') {
                 node.attributes[p.key] = p.value;
+                var dom = node.dom;
                 if (node.dom) {
-                    node.dom.setAttribute(p.key, p.value);
+                    if (dom.tagName == 'INPUT' && p.key == 'value') {
+                        dom.value = p.value;
+                    }
+                    else {
+                        node.dom.setAttribute(p.key, p.value);
+                    }
                 }
             }
             else if (p.type == 'remove') {
@@ -914,7 +938,7 @@ function generateRealDom(vNode) {
         vNode.dom = node;
         //双向绑定的处理
         if (vNode.duplex) {
-            node.addEventListener('keyup', vNode.duplex);
+            node.addEventListener('input', vNode.duplex);
             // node.addEventListener("change",vNode.duplex);
         }
         if (vNode.eventHandler) {
@@ -939,6 +963,7 @@ var vdom_1 = __webpack_require__(4);
 var utils_1 = __webpack_require__(1);
 var ast_1 = __webpack_require__(3);
 var cube_1 = __webpack_require__(0);
+var InstanceCount = 0;
 var Widget = (function () {
     function Widget(elem) {
         this.elem = elem;
@@ -962,11 +987,14 @@ var Widget = (function () {
             'data',
             'value'
         ];
+        this.uuid = (InstanceCount++);
         //初次渲染
     }
     Widget.prototype.render = function () {
         utils_1.log("重新渲染中");
         var vdom = this.renderVirtualDom();
+        console.log(JSON.stringify(this.vdom));
+        console.log(JSON.stringify(vdom));
         this.renderDom(vdom);
     };
     /**
@@ -985,8 +1013,8 @@ var Widget = (function () {
         }
         else {
             var dif = vdom_1.diff(this.vdom, vdom);
-            vdom_1.patch(dif);
             console.warn("diff is", dif);
+            vdom_1.patch(dif);
             // var rDom = generateRealDom(vdom);
             // this.vdom = vdom; 
             // if(this.elem.parentNode){
@@ -1109,12 +1137,12 @@ var Widget = (function () {
                                 ast.eventHandler = ast.eventHandler || {};
                                 vdomNode.eventHandler[ename] = ast.eventHandler[ename] || (function () {
                                     var _a = _this.generateContextCode(contextStack), head = _a[0], tail = _a[1];
-                                    var code = "\n                                             return function(e){\n                                                 " + head.join(" ") + "\n                                                 (" + ast.attributes[name] + ");\n                                                 " + tail.join(" ") + "\n                                             }\n                                         ";
+                                    var code = "\n                                             return function(e){\n                                                 " + head.join(" ") + "\n                                                 " + ast.attributes[name] + ";\n                                                 " + tail.join(" ") + "\n                                             }\n                                         ";
                                     var f = new Function('contextStack', code);
                                     return f.call(_this, contextStack);
                                 })();
                             }
-                            delete ast.attributes[name];
+                            // delete ast.attributes[name];
                             continue;
                         }
                     }
@@ -1128,6 +1156,7 @@ var Widget = (function () {
                 }
                 if (ast.attributes[':value']) {
                     vdomNode.attributes.value = this.renderText(ast, contextStack, ast.attributes[':value']);
+                    console.log(vdomNode.attributes);
                 }
                 return [vdomNode];
         }

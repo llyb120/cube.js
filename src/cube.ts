@@ -6,6 +6,7 @@ export class Cube {
     public static $instance: Cube;
     private $widgets: Widget[] = [];
     private $observer: any = {};
+    private $renderTimers: any = {};
 
     start() {
         domready.Ready(() => {
@@ -45,25 +46,32 @@ export class Cube {
             if (timelimit > 50) {
                 timelimit = 0;
                 this.$widgets.forEach(widget => {
+                    var timer = this.$renderTimers[widget.uuid];
                     //如果上一个时间点已经确定需要渲染，那么不进行脏检测，直接重新渲染
-                    do {
-                        if (widget.needToRerender) {
-                            if (widget.delay) {
-                                widget.delay = false;
-                                break;
-                            }
-                            widget.needToRerender = false;
-                            widget.render();
-                            return;
-                        }
-                    } while (0);
+                    // do {
+                    //     if (widget.needToRerender) {
+                    //         if (widget.delay) {
+                    //             widget.delay = false;
+                    //             break;
+                    //         }
+                    //         widget.needToRerender = false;
+                    //         widget.render();
+                    //         return;
+                    //     }
+                    // } while (0);
                     var key = widget.dataKey;
                     var json = JSON.stringify(this.$data[key]);
                     //当脏检测触发的时候，推迟到下一个时间点进行渲染，降低单一渲染的压力
                     if (json != this.$observer[key]) {
-                        widget.needToRerender = true;
-                        widget.delay = true;
+                        // widget.needToRerender = true;
+                        // widget.delay = true;
                         this.$observer[key] = json;
+                        if(timer){
+                            clearTimeout(timer);
+                        }
+                        this.$renderTimers[widget.uuid] = setTimeout(() => {
+                            widget.render();
+                        },17);
                     }
                 });
             }
