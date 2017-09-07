@@ -1,0 +1,27 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src='bundle.js'></script>
+</head>
+<body>
+    <div c-tpl='cubi'>
+        <input type='text' :value='username' placeholder='输入你的用户名' />
+        <span style='color: ~ username.length > 3 ? "blue" : "red"~ '>
+        长度小于3红色，大于3蓝色 
+        </span>
+    </div> 
+
+</body>
+</html>
+
+<script>
+    var data;
+    Cube.set("cubi",data = {
+        username : ''
+    });
+</script>

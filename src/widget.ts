@@ -24,6 +24,10 @@ export class Widget {
         }
         this.dataKey = this.astTree.attributes['c-tpl'];
 
+        if(!Cube.$instance.get(this.dataKey)){
+            Cube.$instance.set(this.dataKey,{});
+        }
+
         this.ignoreAttributes = [
             'data',
             'value'
@@ -246,7 +250,7 @@ export class Widget {
                                     var code = `
                                              return function(e){
                                                  ${head.join(" ")}
-                                                 return (${ast.attributes[name]});
+                                                 (${ast.attributes[name]});
                                                  ${tail.join(" ")}
                                              }
                                          `;
